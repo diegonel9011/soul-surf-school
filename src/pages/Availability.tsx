@@ -93,15 +93,18 @@ const AvailabilityPage = () => {
       ? adminSlots.filter((s) => s.date === booking.dateRaw)
       : [];
 
+    console.log('[Availability] API_URL:', API_URL, 'dateRaw:', booking.dateRaw, 'classType:', classType);
     fetch(
       `${API_URL}/api/v1/availability?date=${booking.dateRaw ?? ""}&class_type=${classType}`,
       { signal: controller.signal },
     )
       .then((r) => r.json())
       .then((raw) => {
+        console.log('[Availability] raw response:', raw);
         // El backend envuelve la respuesta en { ok, data: [...] }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const list: any[] = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
+        console.log('[Availability] list length:', list.length);
         // Normalizar nombres de campos del backend → interfaz Slot del frontend
         const data: Slot[] = list
           .filter((s) => (s.availableSpots ?? s.available_spots ?? 1) > 0)

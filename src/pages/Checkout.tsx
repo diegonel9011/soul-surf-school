@@ -154,11 +154,26 @@ const CheckoutPage = () => {
           if (!res.ok) throw new Error(raw.message ?? raw.data?.message ?? "Error al crear la reserva");
           // Backend devuelve { ok, data: { bookingId, bookingRef, ... } }
           const payload = raw.data ?? raw;
+
+          // Para MercadoPago: segunda llamada para crear la preferencia y obtener la URL
+          let paymentUrl: string | undefined;
+          if (paymentMethod === "mercadopago") {
+            const mpRes = await fetch(`${API_URL}/api/v1/payments/mercadopago/preference`, {
+              method:  "POST",
+              headers: { "Content-Type": "application/json" },
+              body:    JSON.stringify({ booking_id: payload.bookingId }),
+            });
+            const mpRaw = await mpRes.json();
+            if (!mpRes.ok) throw new Error(mpRaw.message ?? "Error al generar el link de pago");
+            const mpPayload = mpRaw.data ?? mpRaw;
+            paymentUrl = mpPayload.checkoutUrl ?? mpPayload.sandboxUrl;
+          }
+
           data = {
             bookingId:        payload.bookingId,
             bookingRef:       payload.bookingRef,
-            paymentUrl:       payload.paymentUrl,
-            paymentLinkToken: payload.bookingId, // reutilizamos bookingId como token SPEI
+            paymentUrl,
+            paymentLinkToken: payload.bookingId,
           };
         }
       }
